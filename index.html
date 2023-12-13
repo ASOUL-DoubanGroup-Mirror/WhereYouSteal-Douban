@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ZH-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>哪偷的？</title>
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        div {
+            margin-bottom: 20px;
+        }
+
+        label {
+            margin-right: 10px;
+        }
+
+        input {
+            padding: 5px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            resize: none;
+        }
+
+        .message-container {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+            animation: fadeInOut 4s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+
+            0%,
+            100% {
+                opacity: 0;
+            }
+
+            25%,
+            75% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 请在部署时把该资源存放在本地 -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script>
+        function parseDoubanLink() {
+            const inputElement = document.getElementById('doubanLink');
+            const resultElement = document.getElementById('result');
+            const url = inputElement.value;
+            let topicId;
+
+            // 解析topicId
+            try {
+               topicId = url.match(/\/topic\/(\d+)\//)[1];
+            } catch (error) {
+                alert("似乎不是正确的链接")
+                return
+            }
+
+            // 发送请求获取数据
+            axios.get(`http://192.169.0.108:5000/topic/${topicId}`)
+                .then(response => {
+                    console.log(response)
+                    const parsedData = response.data;
+
+                    if (parsedData.length == 0) {
+                        resultElement.value = "请求得到的数据为空。可能要稍后重试。"
+                        return
+                    }
+
+                    // 格式化数据
+                    const formattedResult = parsedData.map(item => {
+                        return `\n原帖：${item.title}\n链接：${item.href}\n来自小组:${item.group}\n---`;
+                    }).join('\n');
+
+                    // 将结果放入文本框
+                    resultElement.value = "【'哪偷的'提醒您，该帖可能偷自】：" + formattedResult;
+                    // copyToClipboard()
+                })
+                .catch(error => {
+                    console.error('请求失败:', error);
+                    resultElement.value = "请求失败。请稍后重试。" + "\n Error:" + error
+                });
+        }
+
+        function copyToClipboard() {
+            console.log("copying...")
+            const resultElement = document.getElementById('result');
+            resultElement.select();
+            document.execCommand('copy');
+            showMessage()
+        }
+
+        function showMessage() {
+            console.log("msg")
+            var messageContainer = document.getElementById('messageContainer');
+            messageContainer.style.display = 'block';
+
+            setTimeout(function () {
+                messageContainer.style.display = 'none';
+            }, 4000); // 4秒后自动消失
+        }
+    </script>
+
+    <div>
+        <div style="display: flex;width: 100%;align-items: center;justify-content: center;flex-direction: column;">
+            <h1>哪偷的？</h1>
+            <img src="./cute.jpg" style="width: 20%;">
+        </div>
+        <div style="display: flex;width: 100%;flex-direction: column;align-items: center;justify-content: center;">
+            <label>输入豆瓣帖子链接:</label>
+            <input type="text" id="doubanLink"
+                placeholder="帖子链接" style="width: 100%;" />
+                <br>
+            <button type="button" onclick="parseDoubanLink()">解析链接</button>
+        </div>
+    </div>
+
+    <div>
+        <h3>解析结果:</h3>
+        <label for="result"></label>
+        <textarea id="result" rows="10" cols="50" readOnly placeholder="此处显示结果"></textarea>
+        <button type="button" style="width: 100%;" onclick="copyToClipboard()">点击复制结果</button>
+    </div>
+
+    <div id="messageContainer" class="message-container">
+        结果已复制至剪切板~
+    </div>
+
+    <!-- <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script> -->
+
+
+
+
+</body>
+
+</html>
